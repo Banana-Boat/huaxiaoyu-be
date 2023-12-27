@@ -1,6 +1,5 @@
 package com.huaxiaoyu.matching.service.impl;
 
-import com.huaxiaoyu.matching.client.CrushingClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -21,14 +20,14 @@ public class MatchingPool extends Thread {
     //微服务，远程调用
     private static RestTemplate restTemplate;
 
-    private static CrushingClient crushingClient;
+//    private static CrushingClient crushingClient;
 
     private final static String startChatUrl = "http://127.0.0.1:9092/user/startchating";
 
-    @Autowired
-    private void setCrushingClient(CrushingClient crushingClient) {
-        MatchingPool.crushingClient = crushingClient;
-    }
+//    @Autowired
+//    private void setCrushingClient(CrushingClient crushingClient) {
+//        MatchingPool.crushingClient = crushingClient;
+//    }
 
     //避免RestTemplate对象空
     @Autowired
@@ -94,8 +93,8 @@ public class MatchingPool extends Thread {
         data.add("b_id", b.getUserId().toString());
 //        data.add("b_bot_id", b.getBotId().toString());
         System.out.println("matching 2!");
-//        restTemplate.postForObject(startChatUrl , data , String.class);
-        crushingClient.startchat(data);
+        restTemplate.postForObject(startChatUrl, data, String.class);
+//        crushingClient.startchat(data);
 
     }
 

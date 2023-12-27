@@ -1,7 +1,6 @@
 package com.huaxiaoyu.main.consumer;
 
 import com.alibaba.fastjson.JSONObject;
-import com.huaxiaoyu.main.client.HuaxiaoyuClient;
 import com.huaxiaoyu.main.domain.Message;
 import com.huaxiaoyu.main.domain.User;
 import com.huaxiaoyu.main.domain.friend.Friend;
@@ -33,7 +32,7 @@ public class Consumer {
 
     private User user;
 
-    private static HuaxiaoyuClient huaxiaoyuClient;
+//    private static HuaxiaoyuClient huaxiaoyuClient;
 
     private static MessageServiceImpl messageService;
 
@@ -48,10 +47,10 @@ public class Consumer {
 
     public static RedisCache redisCache;
 
-    @Autowired
-    private void setHuaxiaoyuClient(HuaxiaoyuClient huaxiaoyuClient) {
-        Consumer.huaxiaoyuClient = huaxiaoyuClient;
-    }
+//    @Autowired
+//    private void setHuaxiaoyuClient(HuaxiaoyuClient huaxiaoyuClient) {
+//        Consumer.huaxiaoyuClient = huaxiaoyuClient;
+//    }
 
     @Autowired
     public void setRedisCache(RedisCache redisCache) {
@@ -268,8 +267,8 @@ public class Consumer {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", this.user.getId().toString());
         data.add("sex", this.user.getSex());
-//        String s = restTemplate.postForObject(addUserUrl , data , String.class);
-        String s = huaxiaoyuClient.addUser(data);
+        String s = restTemplate.postForObject(addUserUrl, data, String.class);
+//        String s = huaxiaoyuClient.addUser(data);
         System.out.println(s);
     }
 
@@ -277,8 +276,8 @@ public class Consumer {
         System.out.println("stop matching");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", this.user.getId().toString());
-//        String s = restTemplate.postForObject(removeUserUrl, data, String.class);
-        String s = huaxiaoyuClient.removeUser(data);
+        String s = restTemplate.postForObject(removeUserUrl, data, String.class);
+//        String s = huaxiaoyuClient.removeUser(data);
         System.out.println(s);
     }
 

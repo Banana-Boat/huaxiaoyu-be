@@ -1,0 +1,16 @@
+server:
+  port: 9092
+
+spring:
+  datasource:
+    name: huaxiaoyu
+    url: jdbc:mysql://82.157.247.7:3306/huaxiaoyu?serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: localhost
+    port: 6379
+
+file:
+  ip: localhost:9092
