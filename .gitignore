@@ -1,3 +1,7 @@
+db-data/
+compose.yaml
+
+##############################################################
 target/
 !**/src/main/**/target/
 !**/src/test/**/target/

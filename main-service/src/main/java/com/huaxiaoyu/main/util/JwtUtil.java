@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class JwtUtil {
     public static final Long JWT_TTL = 7 * 24 * 60 * 60 * 1000L;
-    public static final String JWT_KEY = "terry";
+    public static final String JWT_KEY = "huaxiaoyuxtg";
 
     public static String getUUID() {
         String token = UUID.randomUUID().toString().replaceAll("-", "");
