@@ -9,8 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Player {
     private Integer userId;
-
     private String sex;
-
-    private Integer waitingTime;
 }

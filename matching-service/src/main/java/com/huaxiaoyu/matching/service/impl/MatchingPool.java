@@ -1,144 +1,116 @@
 package com.huaxiaoyu.matching.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class MatchingPool extends Thread {
-    private static List<Player> players = new ArrayList<>();
-
-    // 线程锁
-    private final ReentrantLock lock = new ReentrantLock();
-
-    //微服务，远程调用
-    private static RestTemplate restTemplate;
-
-//    private static CrushingClient crushingClient;
-
+public class MatchingPool implements Runnable {
     private final static String startChatUrl = "http://127.0.0.1:9092/user/startchating";
+    private static final ConcurrentHashMap<Integer, Player> playersMap = new ConcurrentHashMap<>(); // 线程安全的Map，用于快速查找
+    private static final CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>(); // 线程安全的List，用于快速遍历
+    private static final ReentrantLock lock = new ReentrantLock(); // 可重入锁
+    private RestTemplate restTemplate;
 
-//    @Autowired
-//    private void setCrushingClient(CrushingClient crushingClient) {
-//        MatchingPool.crushingClient = crushingClient;
-//    }
+    public static void main(String[] args) {
+        int numThreads = 5;
+        ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
 
-    //避免RestTemplate对象空
-    @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
-        MatchingPool.restTemplate = restTemplate;
-    }
+        for (int i = 0; i < numThreads; i++) {
+            MatchingPool matchingPool = new MatchingPool();
+            RestTemplate restTemplate = new RestTemplate(); // 每个线程都创建一个RestTemplate
+            matchingPool.setRestTemplate(restTemplate);
 
-    public void addPlayer(Integer userId, String sex) {
-        lock.lock();
-        try {
-            System.out.println("当前匹配池人数" + players.size());
-            Boolean flag = true;
-            for (Player p : players) {
-                if (p.getUserId() == userId) {
-                    flag = false;
-                }
-            }
-            if (flag == true) {
-                players.add(new Player(userId, sex, 0));
-            }
-
-        } finally {
-            lock.unlock();
+            threadPool.submit(matchingPool);
         }
     }
-
-    public void removePlayer(Integer userId) {
-        lock.lock();
-        try {
-            List<Player> newPlayers = new ArrayList<>();
-            for (Player player : players) {
-                if (!player.getUserId().equals(userId)) {
-                    newPlayers.add(player);
-                }
-            }
-            players = newPlayers;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void increaseWaitingTime() {  // 将所有当前玩家的等待时间加1
-        for (Player player : players) {
-            player.setWaitingTime(player.getWaitingTime() + 1);
-        }
-    }
-
-    private boolean checkMatched(Player a, Player b) {  // 判断两名玩家是否匹配
-//        int ratingDelta = Math.abs(a.getRating() - b.getRating());
-//        int waitingTime = Math.min(a.getWaitingTime(), b.getWaitingTime());
-//        if(!Objects.equals(a.getUserId(), b.getUserId()) &&!a.getSex().equals(b.getSex())){
-//            return true;
-//        }
-//        return false;
-        return true;
-    }
-
-    private void sendResult(Player a, Player b) {  // 返回匹配结果
-        System.out.println("send result: " + a + " " + b);
-        MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-        data.add("a_id", a.getUserId().toString());
-//        data.add("a_bot_id", a.getBotId().toString());
-        data.add("b_id", b.getUserId().toString());
-//        data.add("b_bot_id", b.getBotId().toString());
-        System.out.println("matching 2!");
-        restTemplate.postForObject(startChatUrl, data, String.class);
-//        crushingClient.startchat(data);
-
-    }
-
-    private void matchPlayers() {  // 尝试匹配所有玩家
-        boolean[] used = new boolean[players.size()];
-        for (int i = 0; i < players.size(); i++) {
-            if (used[i]) continue;
-            for (int j = i + 1; j < players.size(); j++) {
-                if (used[j]) continue;
-                Player a = players.get(i), b = players.get(j);
-                if (checkMatched(a, b)) {
-                    used[i] = used[j] = true;
-                    sendResult(a, b);
-                    break;
-                }
-            }
-        }
-
-        List<Player> newPlayers = new ArrayList<>();
-        for (int i = 0; i < players.size(); i++) {
-            if (!used[i]) {
-                newPlayers.add(players.get(i));
-            }
-        }
-        players = newPlayers;
-    }
-
+    
     @Override
     public void run() {
         while (true) {
             try {
                 Thread.sleep(1000);
-                lock.lock();
-
-                try {
-                    increaseWaitingTime();
-                    matchPlayers();
-                } finally {
-                    lock.unlock();
-                }
+                matchPlayers();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 break;
             }
+        }
+    }
+
+    public void setRestTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public void addPlayer(Integer userId, String sex) {
+        System.out.println("当前匹配池人数" + players.size());
+        lock.lock(); // 获取锁
+
+        try {
+            Player player = new Player(userId, sex);
+            if (playersMap.putIfAbsent(userId, player) == null)
+                players.add(player);
+        } finally {
+            lock.unlock(); // 释放锁
+        }
+    }
+
+    public void removePlayer(Integer userId) {
+        lock.lock(); // 获取锁
+
+        try {
+            Player player = playersMap.remove(userId);
+            if (player != null)
+                players.remove(player);
+        } finally {
+            lock.unlock(); // 释放锁
+        }
+    }
+
+    private void sendResult(Player a, Player b) {
+        System.out.println("send result: " + a + " " + b);
+        MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
+        data.add("a_id", a.getUserId().toString());
+        data.add("b_id", b.getUserId().toString());
+        restTemplate.postForObject(startChatUrl, data, String.class);
+    }
+
+    private void matchPlayers() {
+        lock.lock(); // 获取锁
+
+        try {
+            boolean[] used = new boolean[players.size()];
+
+            for (int i = 0; i < players.size(); i++) {
+                if (used[i]) continue;
+
+                for (int j = i + 1; j < players.size(); j++) {
+                    if (used[j]) continue;
+                    Player a = players.get(i), b = players.get(j);
+                    used[i] = used[j] = true;
+                    sendResult(a, b);
+                    break;
+                }
+            }
+
+            CopyOnWriteArrayList<Player> newPlayers = new CopyOnWriteArrayList<>();
+            for (int i = 0; i < players.size(); i++) {
+                if (!used[i]) {
+                    newPlayers.add(players.get(i));
+                }
+            }
+
+            players.clear();
+            players.addAll(newPlayers);
+        } finally {
+            lock.unlock(); // 释放锁
         }
     }
 }

@@ -25,32 +25,59 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 
 public class Consumer {
-    //用来存放每个客户端对应的MyWebSocket对象。
-    final public static ConcurrentHashMap<Integer, Consumer> users = new ConcurrentHashMap<>();
-    //与某个客户端的连接会话，需要通过它来给客户端发送数据
-    private Session session;
 
-    private User user;
-
-//    private static HuaxiaoyuClient huaxiaoyuClient;
-
-    private static MessageServiceImpl messageService;
-
-    private static UserServiceImpl userService;
-
-    public static RestTemplate restTemplate;
-
-    public static FriendServiceImpl friendServiceimpl;
-
+    final public static ConcurrentHashMap<Integer, Consumer> users = new ConcurrentHashMap<>(); //用来存放每个客户端对应的MyWebSocket对象
     private final static String addUserUrl = "http://127.0.0.1:9093/match/user/add/";
     private final static String removeUserUrl = "http://127.0.0.1:9093/match/user/remove/";
 
+    //    private static HuaxiaoyuClient huaxiaoyuClient;
+    public static RestTemplate restTemplate;
+    public static FriendServiceImpl friendServiceimpl;
     public static RedisCache redisCache;
+    private static MessageServiceImpl messageService;
+    private static UserServiceImpl userService;
+    private Session session; //与某个客户端的连接会话，需要通过它来给客户端发送数据
+    private User user;
 
 //    @Autowired
 //    private void setHuaxiaoyuClient(HuaxiaoyuClient huaxiaoyuClient) {
 //        Consumer.huaxiaoyuClient = huaxiaoyuClient;
 //    }
+
+    public static void startChat(Integer aId, Integer bId) {
+
+        System.out.println("开始发送心跳包！");
+        User userA = userService.getById(aId);
+        User userB = userService.getById(bId);
+
+        JSONObject respA = new JSONObject();
+        respA.put("event", "start-chat");
+        respA.put("opponent_username", userB.getUsername());
+        respA.put("opponent_userid", userB.getId());
+        respA.put("opponent_sex", userB.getSex());
+        respA.put("opponent_departmentCode", userB.getDepartmentCode());
+
+
+        System.out.println(users.get(userA.getId()));
+
+//        users.get(userA.getId()).getAsyncRemote().sendText(respA.toJSONString());
+        System.out.println(userA.getId());
+//        users.get(userA.getId()).getBasicRemote().sendText("hello");
+
+        if (users.get(userA.getId()) != null) {
+            users.get(userA.getId()).sendMessage("hello1");
+        }
+
+//        users.get(userA.getId()).session.getAsyncRemote().sendText(respA.toJSONString());
+
+        JSONObject respB = new JSONObject();
+        respB.put("event", "start-chat");
+        respB.put("opponent_username", userA.getUsername());
+        respB.put("opponent_userid", userA.getId());
+        System.out.println(users.get(userB.getId()));
+//        users.get(userB.getId()).getAsyncRemote().sendText(respB.toJSONString());
+//        users.get(userB.getId()).session.getAsyncRemote().sendText(respB.toJSONString());
+    }
 
     @Autowired
     public void setRedisCache(RedisCache redisCache) {
@@ -72,16 +99,11 @@ public class Consumer {
         Consumer.restTemplate = restTemplate;
     }
 
-
     @Autowired
     public void setFriendsService(FriendServiceImpl friendServiceimpl) {
         Consumer.friendServiceimpl = friendServiceimpl;
     }
 
-
-    /**
-     * 连接建立成功调用的方法
-     */
     @OnOpen
     public void onOpen(Session session, @PathParam("userId") Integer userId) {
         this.session = session;
@@ -106,10 +128,6 @@ public class Consumer {
 
     }
 
-
-    /**
-     * 连接关闭调用的方法
-     */
     @OnClose
     public void onClose() {
         users.remove(this.user.getId());
@@ -117,9 +135,6 @@ public class Consumer {
         System.out.println("1 close！now nums:" + users.size());
     }
 
-    /**
-     * 收到客户端消息后调用的方法
-     */
     @OnMessage
     public void onMessage(String message, Session session) {
         System.out.println("new info::" + message);
@@ -225,41 +240,6 @@ public class Consumer {
     public void onError(Session session, Throwable error) {
         System.out.println("error!");
         error.printStackTrace();
-    }
-
-    public static void startChat(Integer aId, Integer bId) {
-
-        System.out.println("开始发送心跳包！");
-        User userA = userService.getById(aId);
-        User userB = userService.getById(bId);
-
-        JSONObject respA = new JSONObject();
-        respA.put("event", "start-chat");
-        respA.put("opponent_username", userB.getUsername());
-        respA.put("opponent_userid", userB.getId());
-        respA.put("opponent_sex", userB.getSex());
-        respA.put("opponent_departmentCode", userB.getDepartmentCode());
-
-
-        System.out.println(users.get(userA.getId()));
-
-//        users.get(userA.getId()).getAsyncRemote().sendText(respA.toJSONString());
-        System.out.println(userA.getId());
-//        users.get(userA.getId()).getBasicRemote().sendText("hello");
-
-        if (users.get(userA.getId()) != null) {
-            users.get(userA.getId()).sendMessage("hello1");
-        }
-
-//        users.get(userA.getId()).session.getAsyncRemote().sendText(respA.toJSONString());
-
-        JSONObject respB = new JSONObject();
-        respB.put("event", "start-chat");
-        respB.put("opponent_username", userA.getUsername());
-        respB.put("opponent_userid", userA.getId());
-        System.out.println(users.get(userB.getId()));
-//        users.get(userB.getId()).getAsyncRemote().sendText(respB.toJSONString());
-//        users.get(userB.getId()).session.getAsyncRemote().sendText(respB.toJSONString());
     }
 
     private void startMatching() {
