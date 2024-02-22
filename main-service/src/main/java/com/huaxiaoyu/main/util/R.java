@@ -4,11 +4,8 @@ import lombok.Data;
 
 @Data
 public class R {
-
     private String msg;
-
     private Object data;
-
     private Boolean flag;
 
     public R() {

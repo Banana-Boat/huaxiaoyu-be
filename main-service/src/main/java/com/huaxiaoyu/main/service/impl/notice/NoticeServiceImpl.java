@@ -89,12 +89,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         notice.setType(type);
         notice.setResult(result);
         int insert = noticeMapper.insert(notice);
-        
-        if (insert == 1) {
-            return true;
-        }
 
-        return false;
+        return insert == 1;
     }
 
     @Override

@@ -8,16 +8,15 @@ import java.util.Random;
 
 @Component
 public class Util {
-
     public List<Integer> getRandomN(int n, int length) {
-        if (n > length) {
+        if (n > length)
             n = length;
-        }
+
         Random r = new Random();
         Integer[] nums = new Integer[length];
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++)
             nums[i] = i;
-        }
+
         int k = 0;
         int j = length - 1;
         List<Integer> res = new ArrayList<>();
@@ -30,9 +29,7 @@ public class Util {
             j--;
             k++;
         }
-        System.out.println("结果：" + res);
+        
         return res;
     }
-
-
 }

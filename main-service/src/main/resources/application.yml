@@ -1,6 +1,9 @@
 server:
   port: 9092
 
+matching-server:
+  baseUrl: http://127.0.0.1:9093
+
 spring:
   datasource:
     name: huaxiaoyu
@@ -19,6 +22,3 @@ mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 开启控制台 SQL 日志打印
     map-underscore-to-camel-case: false # 驼峰和下划线互转
-
-file:
-  ip: localhost:9092

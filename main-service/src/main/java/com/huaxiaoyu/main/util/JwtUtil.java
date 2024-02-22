@@ -12,8 +12,8 @@ import java.util.Date;
 import java.util.UUID;
 
 public class JwtUtil {
+    public static final String JWT_KEY = "HuaxiaoyuTerry";
     public static final Long JWT_TTL = 7 * 24 * 60 * 60 * 1000L;
-    public static final String JWT_KEY = "huaxiaoyuxtg";
 
     public static String getUUID() {
         String token = UUID.randomUUID().toString().replaceAll("-", "");
@@ -25,19 +25,14 @@ public class JwtUtil {
         return builder.compact();
     }
 
-    public static String createJWT(String subject, Long ttlMillis) {
-        JwtBuilder builder = getJwtBuilder(subject, ttlMillis, getUUID());
-        return builder.compact();
-    }
-
     private static JwtBuilder getJwtBuilder(String subject, Long ttlMillis, String uuid) {
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
         SecretKey secretKey = generalKey();
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
-        if (ttlMillis == null) {
+        if (ttlMillis == null)
             ttlMillis = JwtUtil.JWT_TTL;
-        }
+
         long expMillis = nowMillis + ttlMillis;
         Date expDate = new Date(expMillis);
         return Jwts.builder()
@@ -47,19 +42,6 @@ public class JwtUtil {
                 .setIssuedAt(now)
                 .signWith(signatureAlgorithm, secretKey)
                 .setExpiration(expDate);
-    }
-
-    public static String createJWT(String id, String subject, Long ttlMillis) {
-        JwtBuilder builder = getJwtBuilder(subject, ttlMillis, id);
-        return builder.compact();
-    }
-
-    public static void main(String[] args) throws Exception {
-        String jwt = createJWT("2123");
-        System.out.println(jwt);
-        Claims s = parseJWT(jwt);
-        String s1 = s.getSubject();
-        System.out.println(s1);
     }
 
     public static SecretKey generalKey() {
@@ -75,6 +57,4 @@ public class JwtUtil {
                 .parseClaimsJws(jwt)
                 .getBody();
     }
-
-
 }

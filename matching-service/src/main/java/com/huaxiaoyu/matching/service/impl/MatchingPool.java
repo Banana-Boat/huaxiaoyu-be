@@ -1,5 +1,6 @@
 package com.huaxiaoyu.matching.service.impl;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -13,10 +14,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class MatchingPool implements Runnable {
-    private final static String startChatUrl = "http://127.0.0.1:9092/user/startchating";
     private static final ConcurrentHashMap<Integer, Player> playersMap = new ConcurrentHashMap<>(); // 线程安全的Map，用于快速查找
     private static final CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>(); // 线程安全的List，用于快速遍历
     private static final ReentrantLock lock = new ReentrantLock(); // 可重入锁
+    @Value("${main-server.baseUrl}")
+    private static String mainServerBaseUrl;
     private RestTemplate restTemplate;
 
     public static void main(String[] args) {
@@ -31,7 +33,7 @@ public class MatchingPool implements Runnable {
             threadPool.submit(matchingPool);
         }
     }
-    
+
     @Override
     public void run() {
         while (true) {
@@ -79,7 +81,7 @@ public class MatchingPool implements Runnable {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("a_id", a.getUserId().toString());
         data.add("b_id", b.getUserId().toString());
-        restTemplate.postForObject(startChatUrl, data, String.class);
+        restTemplate.postForObject(mainServerBaseUrl + "/user/start-chatting", data, String.class);
     }
 
     private void matchPlayers() {

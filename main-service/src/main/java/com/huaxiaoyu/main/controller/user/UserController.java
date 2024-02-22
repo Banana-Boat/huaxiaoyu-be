@@ -10,7 +10,6 @@ import com.huaxiaoyu.main.service.InterestService;
 import com.huaxiaoyu.main.service.UserService;
 import com.huaxiaoyu.main.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,8 +23,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    @Value("${file.ip}")
-    private String ip;
     @Autowired
     private UserService userService;
 
@@ -72,7 +69,7 @@ public class UserController {
         }
         return new R("用户名不唯一", false);
     }
-    
+
     @GetMapping("/getDepartmentDict")
     public R getDepartmentDict() {
         List<Department> list = departmentService.list();
