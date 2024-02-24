@@ -1,10 +1,10 @@
 package com.huaxiaoyu.matching.service.impl;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.huaxiaoyu.matching.client.MainFeignClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -17,9 +17,7 @@ public class MatchingPool implements Runnable {
     private static final ConcurrentHashMap<Integer, Player> playersMap = new ConcurrentHashMap<>(); // 线程安全的Map，用于快速查找
     private static final CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>(); // 线程安全的List，用于快速遍历
     private static final ReentrantLock lock = new ReentrantLock(); // 可重入锁
-    @Value("${main-server.baseUrl}")
-    private static String mainServerBaseUrl;
-    private RestTemplate restTemplate;
+    private static MainFeignClient mainFeignClient;
 
     public static void main(String[] args) {
         int numThreads = 5;
@@ -27,11 +25,14 @@ public class MatchingPool implements Runnable {
 
         for (int i = 0; i < numThreads; i++) {
             MatchingPool matchingPool = new MatchingPool();
-            RestTemplate restTemplate = new RestTemplate(); // 每个线程都创建一个RestTemplate
-            matchingPool.setRestTemplate(restTemplate);
 
             threadPool.submit(matchingPool);
         }
+    }
+
+    @Autowired
+    public void setMainFeignClient(MainFeignClient mainFeignClient) {
+        MatchingPool.mainFeignClient = mainFeignClient;
     }
 
     @Override
@@ -45,10 +46,6 @@ public class MatchingPool implements Runnable {
                 break;
             }
         }
-    }
-
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
     }
 
     public void addPlayer(Integer userId, String sex) {
@@ -81,7 +78,7 @@ public class MatchingPool implements Runnable {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("a_id", a.getUserId().toString());
         data.add("b_id", b.getUserId().toString());
-        restTemplate.postForObject(mainServerBaseUrl + "/user/start-chatting", data, String.class);
+        mainFeignClient.startChat(data);
     }
 
     private void matchPlayers() {

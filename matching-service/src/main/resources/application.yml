@@ -1,5 +1,16 @@
 server:
   port: 9093
 
-main-server:
-  baseUrl: http://127.0.0.1:9092
+spring:
+  application:
+    name: matching-service
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: nacos
+        password: nacos
+        namespace: public
+      inetutils:
+        timeout-seconds: 10

@@ -1,11 +1,11 @@
 package com.huaxiaoyu.main.controller.chat;
 
-import com.huaxiaoyu.main.consumer.Consumer;
 import com.huaxiaoyu.main.domain.User;
 import com.huaxiaoyu.main.service.StartChatService;
 import com.huaxiaoyu.main.service.UserService;
 import com.huaxiaoyu.main.util.R;
 import com.huaxiaoyu.main.util.Util;
+import com.huaxiaoyu.main.ws.WsServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +43,7 @@ public class ChatController {
 
     @GetMapping("/chat/getNumOfOnline")
     public R get() {
-        int size = Consumer.users.size();
+        int size = WsServer.users.size();
         HashMap<String, Integer> res = new HashMap<>();
         res.put("num", size);
         return new R("当前在线人数", res, true);

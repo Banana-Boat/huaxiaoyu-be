@@ -1,6 +1,7 @@
-package com.huaxiaoyu.main.consumer;
+package com.huaxiaoyu.main.ws;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huaxiaoyu.main.client.MatchingFeignClient;
 import com.huaxiaoyu.main.domain.Message;
 import com.huaxiaoyu.main.domain.User;
 import com.huaxiaoyu.main.domain.friend.Friend;
@@ -9,11 +10,9 @@ import com.huaxiaoyu.main.service.impl.UserServiceImpl;
 import com.huaxiaoyu.main.service.impl.friend.FriendServiceImpl;
 import com.huaxiaoyu.main.util.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
@@ -24,16 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @ServerEndpoint(value = "/websocket/{userId}")
 @Component
-
-public class Consumer {
-    final public static ConcurrentHashMap<Integer, Consumer> users = new ConcurrentHashMap<>(); //用来存放每个客户端对应的MyWebSocket对象
-    public static RestTemplate restTemplate;
+public class WsServer {
+    final public static ConcurrentHashMap<Integer, WsServer> users = new ConcurrentHashMap<>(); //用来存放每个客户端对应的MyWebSocket对象
     public static FriendServiceImpl friendServiceimpl;
     public static RedisCache redisCache;
-    @Value("${matching-server.baseUrl}")
-    private static String matchingServerBaseUrl;
     private static MessageServiceImpl messageService;
     private static UserServiceImpl userService;
+    private static MatchingFeignClient matchingFeignClient;
     private Session session; // 与某个客户端的连接会话，需要通过其来给客户端发送数据
     private User user;
 
@@ -177,13 +173,13 @@ public class Consumer {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", this.user.getId().toString());
         data.add("sex", this.user.getSex());
-        String s = restTemplate.postForObject(matchingServerBaseUrl + "/match/user/add/", data, String.class);
+        String s = matchingFeignClient.addUser(data);
     }
 
     private void stopMatching() {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", this.user.getId().toString());
-        String s = restTemplate.postForObject(matchingServerBaseUrl + "/match/user/remove/", data, String.class);
+        String s = matchingFeignClient.removeUser(data);
     }
 
     public void sendMessage(String message) {
@@ -197,28 +193,28 @@ public class Consumer {
     }
 
     @Autowired
+    public void setMatchingFeignClient(MatchingFeignClient matchingFeignClient) {
+        WsServer.matchingFeignClient = matchingFeignClient;
+    }
+
+    @Autowired
     public void setRedisCache(RedisCache redisCache) {
-        Consumer.redisCache = redisCache;
+        WsServer.redisCache = redisCache;
     }
 
     @Autowired
     public void setMessageService(MessageServiceImpl messageService) {
-        Consumer.messageService = messageService;
+        WsServer.messageService = messageService;
     }
 
     @Autowired
     public void setUserService(UserServiceImpl userService) {
-        Consumer.userService = userService;
-    }
-
-    @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
-        Consumer.restTemplate = restTemplate;
+        WsServer.userService = userService;
     }
 
     @Autowired
     public void setFriendsService(FriendServiceImpl friendServiceimpl) {
-        Consumer.friendServiceimpl = friendServiceimpl;
+        WsServer.friendServiceimpl = friendServiceimpl;
     }
 }
 

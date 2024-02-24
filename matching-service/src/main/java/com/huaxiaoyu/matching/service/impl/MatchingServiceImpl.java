@@ -5,7 +5,6 @@ import com.huaxiaoyu.matching.service.MatchingService;
 import org.springframework.stereotype.Service;
 
 @Service
-
 public class MatchingServiceImpl implements MatchingService {
     public final static MatchingPool matchingPool = new MatchingPool();
 
