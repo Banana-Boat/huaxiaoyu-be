@@ -35,6 +35,7 @@ flowchart LR
 
   subgraph Huaxiaoyu Services
   id_main --RPC--- id_chatbot(Matching Service\n聊天对象匹配)
+  id_main --RPC--- id_scraping(Scraping Servuce\n辅助聊天话题抓取)
   end
 
   subgraph DataBase
@@ -42,6 +43,7 @@ flowchart LR
   id_chatbot -.- id_mysql
   id_main -.- id_redis[(Redis)]
   id_main -.- id_oos[(Cloud OSS)]
+  id_scraping -.- id_mysql
   end
 
   subgraph Nacos 注册中心
