@@ -1,81 +1,124 @@
-# Huaxiaoyu
+### <div align=center><img src="./readme-image/logo.png" width="18%"></div>
 
-华小遇后端
+# <center>华小遇</center>
+
+一款主打华科校内交友的 APP！
+
+- 同是 Huster，交友对象更靠谱；
+- 通过算法匹配对象，保证志趣相投；
+- 提供辅助聊天功能，助你轻松破冰，避免尴尬。
 
 ## 界面演示
 
-_待补全..._
+#### 1. 登录 / 注册 / 我的
+
+<div class="flexible">
+<img src="./readme-image/login.png" width="25%">
+<img src="./readme-image/register.png" width="25%">
+<img src="./readme-image/mine.png" width="25%">
+</div>
+
+#### 2. 匹配 / 聊天 / 推荐话题
+
+<div class="flexible">
+<img src="./readme-image/match.gif" width="25%">
+<img src="./readme-image/chat.gif" width="25%">
+<img src="./readme-image/topic.gif" width="25%">
+</div>
 
 ## 架构图
 
-<!-- ```mermaid
+```mermaid
 flowchart LR
-  id_client(((Clients))) --HTTP--- id_main(Main Service\nAPI网关 / 鉴权\n用户相关 / 终端交互)
+  id_client(((Clients))) --HTTP--- id_main(Main Service\nAPI网关 / 鉴权\n用户相关 / IM相关)
   id_client --Websocket--- id_main
 
-  subgraph Terryminal Services
-  id_main --gRPC--- id_chatbot(Chatbot Service\nAI机器人)
-  id_main --Docker Engine API--- Docker
+  subgraph Huaxiaoyu Services
+  id_main --RPC--- id_chatbot(Matching Service\n聊天对象匹配)
   end
 
   subgraph DataBase
   id_main -.- id_mysql[(Mysql DB)]
   id_chatbot -.- id_mysql
-  id_main -.- id_redis[(Redis MQ)]
+  id_main -.- id_redis[(Redis)]
+  id_main -.- id_oos[(Cloud OSS)]
   end
 
-  subgraph Docker
-  id_main --gRPC--- id_bash(Pty Container\n内置Node服务)
+  subgraph Nacos 注册中心
+  id_nacos(服务发现 / 配置管理) --HTTP--- id_chatbot
   end
-
-  subgraph 第三方API
-  id_gpt(OpenAI ChatGPT3.5) --HTTP--- id_chatbot
-  end
-``` -->
+```
 
 ## ER 图
 
-<!-- ```mermaid
+```mermaid
 erDiagram
-    USER ||--o{ TERMINAL : own
-    TERMINAL ||--|| TERMINAL_TEMPLATE : instantiated-from
+    USER }|--o{ NOTICE : participate
+    USER }|--o{ MESSAGE : participate
+    USER }|--o{ RELATIONSHIP : participate
+
     USER {
-        int id PK
-        string email UK "邮箱"
+        int id UK
+        string username PK "用户名"
         string nickname "昵称"
         string password "密码"
-        int chatbot_token "Chatbot服务剩余Token数"
-        string verification_code "验证码"
-        datetime expired_at "验证码过期时间"
-        datetime created_at
-        datetime updated_at
-    }
-    TERMINAL {
-        string id PK "同Docker容器ID"
-        string name UK "实例名称（同Docker容器名）"
-        string size "Docker容器体积"
-        string remark "用户备注"
-        int owner_id FK "所有者ID"
-        int template_id FK "模版ID"
-        time total_duration "累计使用时长"
-        datetime created_at
-        datetime updated_at
-    }
-    TERMINAL_TEMPLATE {
-        int id PK
-        string name UK "模版名称"
-        string image_name "Docker镜像名"
-        string size "Docker镜像体积"
-        string description "模版描述"
+        int age "年龄"
+        string sex "性别"
+        string department_code "学院代号"
+        string head_photo "头像URL"
+        string phone_num "电话"
         datetime created_at
         datetime updated_at
     }
 
-``` -->
+    NOTICE {
+        int id PK
+        int send_id "发送者ID"
+        int receive_id "接收者ID"
+        int type "通知类型"
+        int result "回复内容"
+        int status "通知状态"
+        datetime created_at
+        datetime updated_at
+    }
+
+    MESSAGE {
+        int id PK
+        int send_id UK "发送者ID"
+        int receive_id UK "接收者ID"
+        string content "消息内容"
+        int status "消息状态"
+        datetime created_at
+        datetime updated_at
+    }
+
+    RELATIONSHIP {
+        int id PK
+        int send_id UK "发送者ID"
+        int receive_id UK "接收者ID"
+        int status "关系状态"
+        datetime created_at
+        datetime updated_at
+    }
+
+    TOPIC {
+        int id PK
+        string title UK "话题标题"
+        string type "话题类型"
+        string content "话题内容"
+        string options "选项"
+    }
+```
 
 ## 主要依赖
 
-<!-- - [**gRPC**](https://grpc.io/) -->
+- [**Spring Cloud Alibaba**](https://github.com/alibaba/spring-cloud-alibaba)
+- [**Nacos**](https://github.com/alibaba/Nacos)
+- [**OpenFeign**](https://github.com/OpenFeign/feign)
+- [**Spring Websocket**](https://spring.io/guides/gs/messaging-stomp-websocket)
+- [**Spring Security**](https://github.com/spring-projects/spring-security)
+- [**MyBatis-Plus**](https://github.com/baomidou/mybatis-plus)
+- [**Alibaba Cloud OSS**](https://www.alibabacloud.com/zh/product/object-storage-service)
 
 ## 接口文档
 
